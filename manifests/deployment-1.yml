@@ -1,0 +1,16 @@
+apiVersion : apps/v1beta1
+kind: Deployment
+metadata:
+  name: "aksga17-0eb2"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "aksga17-0eb2"
+    spec:
+      containers:
+        - name: "aksga17-0eb2"
+          image: "sgacreg.azurecr.io/aksga17"
+          ports:
+          - containerPort: 8080
