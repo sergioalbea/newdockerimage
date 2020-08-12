@@ -1,0 +1,50 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: sgacreg.azurecr.io
+        username: ${{ secrets.acr_sgacreg_username }}
+        password: ${{ secrets.acr_sgacreg_password }}
+    
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/" -f  "Dockerfile" -t sgacreg.azurecr.io/aksga17:${{ github.sha }}
+        docker push sgacreg.azurecr.io/aksga17:${{ github.sha }}
+    
+    - uses: azure/k8s-set-context@v1
+      with:
+         kubeconfig: ${{ secrets.aks_aksga17_kubeConfig }}
+      id: login
+    
+    - name: Create namespace
+      run: |
+        namespacePresent=`kubectl get namespace | grep aksga17850d | wc -l`
+        if [ $namespacePresent -eq 0 ]
+        then
+            echo `kubectl create namespace aksga17850d`
+        fi
+
+    - uses: azure/k8s-create-secret@v1
+      with:
+        namespace: aksga17850d
+        container-registry-url: sgacreg.azurecr.io
+        container-registry-username: ${{ secrets.acr_sgacreg_username }}
+        container-registry-password: ${{ secrets.acr_sgacreg_password }}
+        secret-name: aksga17dockerauth
+       
+    - uses: azure/k8s-deploy@v1
+      with:
+        namespace: aksga17850d
+        manifests: |
+          manifests/deployment-1.yml
+          manifests/service-1.yml
+        images: |
+          sgacreg.azurecr.io/aksga17:${{ github.sha }}
+        imagepullsecrets: |
+          aksga17dockerauth
