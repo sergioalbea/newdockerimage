@@ -1,0 +1,16 @@
+apiVersion : apps/v1beta1
+kind: Deployment
+metadata:
+  name: "sgaakscluster-461e"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "sgaakscluster-461e"
+    spec:
+      containers:
+        - name: "sgaakscluster-461e"
+          image: "sgacreg.azurecr.io/sgaakscluster"
+          ports:
+          - containerPort: 80
